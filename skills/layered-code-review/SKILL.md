@@ -7,6 +7,26 @@ description: Orchestrate a thorough, interactive code review by spawning one sub
 
 Perform an in-depth, interactive code review by splitting the codebase into architectural layers and assigning a dedicated subagent to each layer. Each subagent engages the user in dialogue during its review to capture intent, business rules, and design rationale that cannot be inferred from code alone.
 
+## 0. Accelerator Scripts
+
+This skill includes shell scripts in `scripts/` that **must be run first** to avoid slow manual analysis. Run them from the project root.
+
+| Script | Purpose | Usage |
+|---|---|---|
+| `detect-stack.sh` | Detect languages, frameworks, test tools, CI, and map directories to layers | `./scripts/detect-stack.sh /path/to/project` |
+| `classify-changes.sh` | Classify changed files into layers (outputs JSON) | `./scripts/classify-changes.sh main..HEAD` |
+| `diff-stats.sh` | Get per-file churn stats, hotspots, and change types | `./scripts/diff-stats.sh main..HEAD` |
+| `extract-layer-diff.sh` | Extract the actual diff for one layer's files only | `./scripts/extract-layer-diff.sh main..HEAD file1 file2 ...` |
+
+### Recommended Execution Order
+
+1. Run `detect-stack.sh` to understand the project architecture and directory-to-layer mappings.
+2. Run `classify-changes.sh` with the diff range to get files grouped by layer as JSON.
+3. Run `diff-stats.sh` to identify hotspots and the overall change scope.
+4. For each layer subagent, run `extract-layer-diff.sh` with that layer's file list so the subagent receives only its relevant diff.
+
+**Do not skip these scripts.** They replace minutes of manual file browsing with seconds of structured output.
+
 ## 1. Identify The Change Surface
 
 Before spawning subagents, the orchestrator must understand what changed:
